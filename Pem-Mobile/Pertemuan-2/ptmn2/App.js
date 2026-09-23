@@ -1,5 +1,5 @@
 import { StatusBar } from "expo-status-bar";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -16,8 +16,13 @@ import {
   ActivityIndicator,
   SafeAreaView,
   Alert,
+  Linking,
   Platform,
+  KeyboardAvoidingView,
+  Animated,
 } from "react-native";
+
+// ─── Data ────────────────────────────────────────────────────────────────────
 
 const PROFILE = {
   name: "Muhammad Raffi",
@@ -25,7 +30,7 @@ const PROFILE = {
   email: "raffi38321@gmail.com",
   phone: "0859-7181-5705",
   location: "Cirebon, West Java",
-  bio: "Lulusan bootcamp asah dan coding camp",
+  bio: "I enjoy working with modern technologies such as JavaScript, React, Node.js, Express, RESTful APIs, and AI-related tools and frameworks.",
   avatar: require("./assets/selena potrait.jpg"),
 };
 
@@ -35,12 +40,13 @@ const SKILLS = [
   { id: "3", name: "TypeScipt", level: 90, color: "#844e4e" },
   { id: "4", name: "NextJs", level: 80, color: "#45e111" },
   { id: "5", name: "MongoDB", level: 90, color: "#7863c5" },
-  { id: "6", name: "React Native", level: 75, color: "#2b064e80" },
+  { id: "6", name: "React Native", level: 75, color: "#2b64ee" },
+  { id: "7", name: "Docker", level: 90, color: "#7863c5" },
 ];
 
 const SECTIONS = [
   {
-    title: "Pengalaman kerja",
+    title: "💼 Pengalaman Kerja",
     data: [
       {
         id: "w1",
@@ -61,20 +67,43 @@ const SECTIONS = [
         period: "2024-2029",
         desc: "IPK 3.75 / 4.00 | Skripsi: Implementasi Machine Learning Pada Web.",
       },
+      {
+        id: "e2",
+        role: "Mentee",
+        company: "Asah Dicoding",
+        period: "Juli 2025 - Desember 2025",
+        desc: "React & Backend Development | Pengembangan aplikasi web menggunakan React dan Express.",
+      },
+      {
+        id: "e3",
+        role: "Mentee",
+        company: "Coding Camp",
+        period: "Maret 2026 - Juli 2026",
+        desc: "Machine Learning | Pembelajaran dan pengembangan solusi AI menggunakan Python, TensorFlow, dan Machine Learning.",
+      },
     ],
   },
 ];
 
 const SOCIAL = [
-  { id: "s1", label: "Github", icon: "🏅", url: "https://github.com/Raffi38321" },
+  { id: "s1", label: "Github", icon: "🏅 ", url: "https://github.com/Raffi38321" },
   {
     id: "s2",
     label: "Linkedin",
-    icon: "👜",
+    icon: "👜 ",
     url: "https://www.linkedin.com/in/muhammad-raffi-52658130a",
   },
-  { id: "s3", label: "Youtube", icon: "▶️", url: "https://www.youtube.com" },
+  { id: "s3", label: "Youtube", icon: "▶️ ", url: "https://www.youtube.com" },
 ];
+
+// Tab definitions
+const TABS = [
+  { key: "info", label: "Info" },
+  { key: "skills", label: "Skills" },
+  { key: "kontak", label: "Kontak" },
+];
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
 const SkillCard = ({ item }) => (
   <View style={styles.skillCard}>
@@ -109,6 +138,8 @@ const TimelineCard = ({ item, onPress }) => (
   </TouchableOpacity>
 );
 
+// ─── Main App ─────────────────────────────────────────────────────────────────
+
 export default function App() {
   const [openToWork, setOpenToWork] = useState(true);
   const [selectedItem, setSelectedItem] = useState(null);
@@ -116,7 +147,48 @@ export default function App() {
   const [senderName, setSenderName] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [pressing, setPressing] = useState(false);
+
+  // Tab navigasi state
+  const [activeTab, setActiveTab] = useState("info");
+
+  // Animated values untuk avatar (fade-in + scale)
+  const avatarOpacity = useRef(new Animated.Value(0)).current;
+  const avatarScale = useRef(new Animated.Value(0.6)).current;
+
+  // Jalankan animasi saat komponen mount
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(avatarOpacity, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.spring(avatarScale, {
+        toValue: 1,
+        friction: 4,
+        tension: 60,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  // ── Helpers ──────────────────────────────────────────────────────────────
+
+  const showAlert = (title, msg, buttons) => {
+    if (Platform.OS === "web") {
+      if (buttons && buttons.length > 1) {
+        const confirmed = window.confirm(`${title}\n\n${msg}`);
+        if (confirmed) {
+          const confirmBtn = buttons.find((b) => b.text !== "Batal" && b.onPress);
+          if (confirmBtn) confirmBtn.onPress();
+        }
+      } else {
+        window.alert(`${title}\n\n${msg}`);
+      }
+    } else {
+      Alert.alert(title, msg, buttons);
+    }
+  };
 
   const handleCardPress = (item) => {
     setSelectedItem(item);
@@ -125,28 +197,120 @@ export default function App() {
 
   const handleSend = () => {
     if (!senderName.trim() || !message.trim()) {
-      Alert.alert("Peringatan", "Nama dan pesan tidak boleh kosong");
+      showAlert("Peringatan", "Nama dan pesan tidak boleh kosong");
       return;
     }
-
     setSending(true);
     setTimeout(() => {
       setSending(false);
       setSenderName("");
       setMessage("");
-      Alert.alert("Berhasil", `Pesan dari ${senderName} telah terkirim`);
+      showAlert("Berhasil", `Pesan dari ${senderName} telah terkirim`);
     }, 2000);
   };
+
+  // ── Tab content renderers ─────────────────────────────────────────────────
+
+  const renderInfoTab = () => (
+    <View style={styles.sectionBox}>
+      <Text style={styles.sectionTitle}>Riwayat</Text>
+      <Text style={styles.sectionSubtitle}>
+        SectionList: data dikelompokkan per kategori. Ketuk kartu untuk modal detail.
+      </Text>
+      <SectionList
+        sections={SECTIONS}
+        keyExtractor={(item) => item.id}
+        renderItem={({ item }) => (
+          <TimelineCard item={item} onPress={handleCardPress} />
+        )}
+        renderSectionHeader={({ section }) => (
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionHeaderText}>{section.title}</Text>
+          </View>
+        )}
+        scrollEnabled={false}
+        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        SectionSeparatorComponent={() => <View style={{ height: 16 }} />}
+      />
+    </View>
+  );
+
+  const renderSkillsTab = () => (
+    <View style={styles.sectionBox}>
+      <Text style={styles.sectionTitle}>Keahlian</Text>
+      <Text style={styles.sectionSubtitle}>
+        FlatList: menampilkan list data secara efisien
+      </Text>
+      <FlatList
+        data={SKILLS}
+        keyExtractor={(item) => `${item.id}-${item.name}`}
+        renderItem={({ item }) => <SkillCard item={item} />}
+        scrollEnabled={false}
+        ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+      />
+    </View>
+  );
+
+  const renderKontakTab = () => (
+    // ── [4] KeyboardAvoidingView: form tidak tertutup keyboard ──────────────
+    <KeyboardAvoidingView
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 90 : 70}
+    >
+      <View style={styles.sectionBox}>
+        <Text style={styles.sectionTitle}>Hubungi Saya</Text>
+        <Text style={styles.sectionSubtitle}>
+          TextInput, Button, ActivityIndicator, KeyboardAvoidingView
+        </Text>
+
+        <TextInput
+          style={styles.textInput}
+          placeholder="Nama Anda"
+          placeholderTextColor="#888"
+          value={senderName}
+          onChangeText={setSenderName}
+          returnKeyType="next"
+          editable={!sending}
+        />
+
+        <TextInput
+          style={[styles.textInput, styles.textArea]}
+          placeholder="Tulis pesan Anda di sini..."
+          placeholderTextColor="#888"
+          value={message}
+          onChangeText={setMessage}
+          multiline
+          numberOfLines={4}
+          textAlignVertical="top"
+          editable={!sending}
+        />
+
+        {sending ? (
+          <View style={styles.loadingRow}>
+            <ActivityIndicator size="large" color="#7c3aed" />
+            <Text style={styles.loadingText}>Mengirim pesan...</Text>
+          </View>
+        ) : (
+          <Pressable style={styles.sendBtn} onPress={handleSend}>
+            <Text style={styles.sendBtnText}>Kirim Pesan</Text>
+          </Pressable>
+        )}
+      </View>
+    </KeyboardAvoidingView>
+  );
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar backgroundColor="#1a1a2e" barStyle="light-content" />
 
+      {/* Header */}
       <View style={styles.headerBar}>
-        <Text style={styles.headerTitle}>📄 Curriculum vitae</Text>
+        <Text style={styles.headerTitle}>📄  Curriculum Vitae</Text>
         <View style={styles.switchRow}>
           <Text style={styles.switchLabel}>
-            {openToWork ? "🟢 Open" : "🔴 Busy"}
+            {openToWork ? "🟢  Open" : "🔴  Busy"}
           </Text>
           <Switch
             value={openToWork}
@@ -158,8 +322,19 @@ export default function App() {
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+
+        {/* Profile section */}
         <View style={styles.profileSection}>
-          <Image source={PROFILE.avatar} style={styles.avatar} />
+          {/* ── [6] Animated avatar: fade-in + spring scale ── */}
+          <Animated.View
+            style={{
+              opacity: avatarOpacity,
+              transform: [{ scale: avatarScale }],
+            }}
+          >
+            <Image source={PROFILE.avatar} style={styles.avatar} />
+          </Animated.View>
+
           {openToWork && (
             <View style={styles.badge}>
               <Text style={styles.badgeText}>Open to Work</Text>
@@ -173,16 +348,21 @@ export default function App() {
             <Text style={styles.contactItem}>{PROFILE.email}</Text>
             <Text style={styles.contactItem}>{PROFILE.location}</Text>
           </View>
-
           <Text style={styles.contactItem}>{PROFILE.phone}</Text>
 
+          {/* Social buttons */}
           <View style={styles.socialRow}>
             {SOCIAL.map((s) => (
               <TouchableOpacity
                 key={s.id}
                 style={styles.socialBtn}
-                activeOpacity={0.8}
-                onPress={() => Alert.alert("Link", s.url)}
+                activeOpacity={0.7}
+                onPress={() =>
+                  showAlert(s.label, s.url, [
+                    { text: "Batal", style: "cancel" },
+                    { text: "Buka", onPress: () => Linking.openURL(s.url) },
+                  ])
+                }
               >
                 <Text style={styles.socialIcon}>{s.icon}</Text>
                 <Text style={styles.socialLabel}>{s.label}</Text>
@@ -190,101 +370,57 @@ export default function App() {
             ))}
           </View>
 
+          {/* Download CV */}
           <Pressable
             style={({ pressed }) => [
               styles.downloadBtn,
               pressed && styles.downloadBtnPressed,
             ]}
-            onPressIn={() => setPressing(true)}
-            onPressOut={() => setPressing(false)}
-            onPress={() => Alert.alert("Download", "CV sedang diunduh...")}
+            onPress={() =>
+              showAlert("Download CV", "CV sedang diunduh...", [{ text: "OK" }])
+            }
           >
-            <Text style={styles.downloadBtnText}>
-              {pressing ? "Mengunduh..." : "Download CV (PDF)"}
-            </Text>
+            {({ pressed }) => (
+              <Text style={styles.downloadBtnText}>
+                {pressed ? "Mengunduh..." : "⬇  Download CV (PDF)"}
+              </Text>
+            )}
           </Pressable>
         </View>
 
-        <View style={{ height: 40 }} />
-
-        <View style={styles.sectionBox}>
-          <Text style={styles.sectionTitle}>Keahlian</Text>
-          <Text style={styles.sectionSubtitle}>
-            FlatList: menampilkan list data secara efisien
-          </Text>
-          <FlatList
-            data={SKILLS}
-            keyExtractor={(item) => `${item.id}-${item.name}`}
-            renderItem={({ item }) => <SkillCard item={item} />}
-            scrollEnabled={false}
-            ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-          />
+        {/* ── [5] Tab Navigasi ─────────────────────────────────────────────── */}
+        <View style={styles.tabBar}>
+          {TABS.map((tab) => (
+            <TouchableOpacity
+              key={tab.key}
+              style={[
+                styles.tabBtn,
+                activeTab === tab.key && styles.tabBtnActive,
+              ]}
+              onPress={() => setActiveTab(tab.key)}
+              activeOpacity={0.7}
+            >
+              <Text
+                style={[
+                  styles.tabLabel,
+                  activeTab === tab.key && styles.tabLabelActive,
+                ]}
+              >
+                {tab.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
         </View>
 
-        <View style={styles.sectionBox}>
-          <Text style={styles.sectionTitle}>Riwayat</Text>
-          <Text style={styles.sectionSubtitle}>
-            SectionList: data dikelompokkan per kategori. Ketuk kartu untuk
-            modal detail.
-          </Text>
-          <SectionList
-            sections={SECTIONS}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <TimelineCard item={item} onPress={handleCardPress} />
-            )}
-            renderSectionHeader={({ section }) => (
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionHeaderText}>{section.title}</Text>
-              </View>
-            )}
-            scrollEnabled={false}
-            ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
-            SectionSeparatorComponent={() => <View style={{ height: 16 }} />}
-          />
-        </View>
-
-        <View style={styles.sectionBox}>
-          <Text style={styles.sectionTitle}>Hubungi Saya</Text>
-          <Text style={styles.sectionSubtitle}>
-            4 TextInput, Button, Activity Indicator
-          </Text>
-
-          <TextInput
-            style={styles.textInput}
-            placeholder="Nama Anda"
-            placeholderTextColor="#888"
-            value={senderName}
-            onChangeText={setSenderName}
-            returnKeyType="next"
-            editable={!sending}
-          />
-
-          <TextInput
-            style={[styles.textInput, styles.textArea]}
-            placeholder="Tulis pesan Anda di sini..."
-            placeholderTextColor="#888"
-            value={message}
-            onChangeText={setMessage}
-            multiline
-            numberOfLines={4}
-            textAlignVertical="top"
-            editable={!sending}
-          />
-
-          {sending ? (
-            <View style={styles.loadingRow}>
-              <ActivityIndicator size="large" color="#7c3aed" />
-              <Text style={styles.loadingText}>Mengirim pesan...</Text>
-            </View>
-          ) : (
-            <Pressable style={styles.sendBtn} onPress={handleSend}>
-              <Text style={styles.sendBtnText}>Kirim Pesan</Text>
-            </Pressable>
-          )}
+        {/* Tab content */}
+        <View style={{ marginBottom: 32 }}>
+          {activeTab === "info" && renderInfoTab()}
+          {activeTab === "skills" && renderSkillsTab()}
+          {activeTab === "kontak" && renderKontakTab()}
         </View>
       </ScrollView>
 
+      {/* Modal detail timeline */}
       <Modal
         visible={modalVisible}
         animationType="slide"
@@ -302,7 +438,6 @@ export default function App() {
                 <Text style={styles.modalDesc}>{selectedItem.desc}</Text>
               </>
             )}
-
             <TouchableOpacity
               style={styles.modalCloseBtn}
               onPress={() => setModalVisible(false)}
@@ -315,6 +450,8 @@ export default function App() {
     </SafeAreaView>
   );
 }
+
+// ─── Colors & Styles ──────────────────────────────────────────────────────────
 
 const COLORS = {
   bg: "#0f0f1a",
@@ -332,24 +469,21 @@ const COLORS = {
 };
 
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: COLORS.bg,
-  },
-  scroll: {
-    flex: 1,
-  },
+  safeArea: { flex: 1, backgroundColor: COLORS.bg },
+  scroll: { flex: 1 },
+
+  // Header
   headerBar: {
     backgroundColor: COLORS.header,
     paddingHorizontal: 20,
     paddingVertical: 14,
     flexDirection: "row",
     justifyContent: "space-between",
+    alignItems: "center",
     borderBottomWidth: 1,
     borderBottomColor: COLORS.cardBorder,
     elevation: 4,
     shadowColor: "#000",
-    alignItems: "center",
     shadowOpacity: 0.3,
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 4,
@@ -360,24 +494,21 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     letterSpacing: 0.5,
   },
-  switchRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
+  switchRow: { flexDirection: "row", alignItems: "center" },
   switchLabel: {
     color: COLORS.textMuted,
     fontSize: 12,
     fontWeight: "600",
     marginRight: 8,
   },
+
+  // Profile
   profileSection: {
     alignItems: "center",
     paddingVertical: 32,
     paddingHorizontal: 20,
     backgroundColor: COLORS.card,
-    marginBottom: 16,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    marginBottom: 0,
     borderBottomWidth: 2,
     borderColor: COLORS.accent,
   },
@@ -398,11 +529,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginBottom: 12,
   },
-  badgeText: {
-    color: COLORS.success,
-    fontSize: 12,
-    fontWeight: "700",
-  },
+  badgeText: { color: COLORS.success, fontSize: 12, fontWeight: "700" },
   profileName: {
     color: COLORS.white,
     fontSize: 26,
@@ -439,6 +566,8 @@ const styles = StyleSheet.create({
   },
   socialRow: {
     flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "center",
     marginTop: 16,
     marginBottom: 20,
   },
@@ -451,16 +580,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.cardBorder,
     marginHorizontal: 6,
+    marginBottom: 8,
   },
-  socialIcon: {
-    fontSize: 20,
-    marginBottom: 4,
-  },
-  socialLabel: {
-    color: COLORS.accentLight,
-    fontSize: 11,
-    fontWeight: "600",
-  },
+  socialIcon: { fontSize: 20, marginBottom: 4 },
+  socialLabel: { color: COLORS.accentLight, fontSize: 11, fontWeight: "600" },
   downloadBtn: {
     backgroundColor: COLORS.accent,
     paddingVertical: 14,
@@ -469,20 +592,49 @@ const styles = StyleSheet.create({
     elevation: 4,
     shadowColor: COLORS.accent,
     shadowOpacity: 0.5,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
+    shadowOffset: { width: 0, height: 4 },
     shadowRadius: 8,
   },
-  downloadBtnPressed: {
-    backgroundColor: "#5b21b6",
+  downloadBtnPressed: { backgroundColor: "#5b21b6" },
+  downloadBtnText: { color: COLORS.white, fontWeight: "700", fontSize: 14 },
+
+  // ── [5] Tab Bar ────────────────────────────────────────────────────────────
+  tabBar: {
+    flexDirection: "row",
+    backgroundColor: COLORS.header,
+    marginHorizontal: 16,
+    marginTop: 16,
+    marginBottom: 12,
+    borderRadius: 14,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: COLORS.cardBorder,
   },
-  downloadBtnText: {
+  tabBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 10,
+  },
+  tabBtnActive: {
+    backgroundColor: COLORS.accent,
+    shadowColor: COLORS.accent,
+    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 6,
+    elevation: 3,
+  },
+  tabLabel: {
+    color: COLORS.textMuted,
+    fontSize: 13,
+    fontWeight: "600",
+  },
+  tabLabelActive: {
     color: COLORS.white,
     fontWeight: "700",
-    fontSize: 14,
   },
+
+  // Section boxes
   sectionBox: {
     marginHorizontal: 16,
     marginBottom: 16,
@@ -518,6 +670,8 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     fontSize: 13,
   },
+
+  // Skills
   skillCard: {
     backgroundColor: "#16213e",
     padding: 12,
@@ -530,26 +684,17 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 8,
   },
-  skillName: {
-    color: COLORS.text,
-    fontWeight: "600",
-    fontSize: 13,
-  },
-  skillPercent: {
-    color: COLORS.accentLight,
-    fontWeight: "700",
-    fontSize: 13,
-  },
+  skillName: { color: COLORS.text, fontWeight: "600", fontSize: 13 },
+  skillPercent: { color: COLORS.accentLight, fontWeight: "700", fontSize: 13 },
   progressBg: {
     height: 6,
     backgroundColor: "#0f172a",
     borderRadius: 4,
     overflow: "hidden",
   },
-  progressFill: {
-    height: 6,
-    borderRadius: 4,
-  },
+  progressFill: { height: 6, borderRadius: 4 },
+
+  // Timeline
   timelineCard: {
     flexDirection: "row",
     backgroundColor: "#16213e",
@@ -566,9 +711,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginRight: 12,
   },
-  timelineContent: {
-    flex: 1,
-  },
+  timelineContent: { flex: 1 },
   timelineRole: {
     color: COLORS.white,
     fontWeight: "700",
@@ -580,16 +723,14 @@ const styles = StyleSheet.create({
     fontSize: 13,
     marginBottom: 2,
   },
-  timelinePeriod: {
-    color: COLORS.textMuted,
-    fontSize: 11,
-    marginBottom: 6,
-  },
+  timelinePeriod: { color: COLORS.textMuted, fontSize: 11, marginBottom: 6 },
   timelineHint: {
     color: COLORS.accentGold,
     fontSize: 11,
     fontStyle: "italic",
   },
+
+  // Form / Kontak
   textInput: {
     backgroundColor: "#0f172a",
     color: COLORS.text,
@@ -601,21 +742,14 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginBottom: 12,
   },
-  textArea: {
-    height: 100,
-    textAlignVertical: "top",
-  },
+  textArea: { height: 100, textAlignVertical: "top" },
   sendBtn: {
     backgroundColor: COLORS.accent,
     borderRadius: 10,
     paddingVertical: 14,
     alignItems: "center",
   },
-  sendBtnText: {
-    color: COLORS.white,
-    fontWeight: "700",
-    fontSize: 14,
-  },
+  sendBtnText: { color: COLORS.white, fontWeight: "700", fontSize: 14 },
   loadingRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -628,6 +762,8 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginLeft: 12,
   },
+
+  // Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.75)",
@@ -653,11 +789,7 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     marginBottom: 4,
   },
-  modalPeriod: {
-    color: COLORS.textMuted,
-    fontSize: 13,
-    marginBottom: 16,
-  },
+  modalPeriod: { color: COLORS.textMuted, fontSize: 13, marginBottom: 16 },
   modalDivider: {
     height: 1,
     backgroundColor: COLORS.cardBorder,
@@ -675,9 +807,5 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
   },
-  modalCloseBtnText: {
-    color: COLORS.white,
-    fontWeight: "700",
-    fontSize: 14,
-  },
+  modalCloseBtnText: { color: COLORS.white, fontWeight: "700", fontSize: 14 },
 });
