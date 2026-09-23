@@ -61,3 +61,6 @@ LANGKAH 2 - Menyiapkan data Objek dan Arrays
 28. styling
 29. bukti
     - <img src="image-15.png" width=50% />
+    - <img src="image-16.png" width=50% />
+  
+<img src="CV App.gif" alt="CV App" width="50%" >
