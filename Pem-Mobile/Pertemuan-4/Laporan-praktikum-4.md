@@ -3,18 +3,24 @@
 
 Langkah 1 : menginstall depedensi dan library yang dibutuhkan untuk membuat navigasi
 1. install (npm install @react-navigation/native)
-![alt text](image.png)
+- <img src="image.png" width=50% />
 2. install depedensi native(npx expo install react-native-screens react-native-safe-area-context react-native-gesture-handler react-native-reanimated)
-![alt text](image-1.png)
+- <img src="image-1.png" width=50% />
 
 
 
 Langkah 2: membuat stack navigasi
 1. instal library untuk stack navigasi(npm install @react-navigation/native-stack)
-![alt text](image-2.png)
+- <img src="image-2.png" width=50% />
 2. login.js
-![alt text](image-5.png)
+- <img src="image-5.png" width=50% />
 3. signup.js
-   ![alt text](image-6.png)
+- <img src="image-6.png" width=50% />
 4. app.js
-   ![alt text](image-7.png)
+- <img src="image-7.png" width=50% />
+
+
+<video width="640" height="360" controls>
+  <source src="iPhone-14-PRO-localhost-_u6hw-fhh3gunx.webm" type="video/webm">
+  Browser Anda tidak mendukung tag video HTML5.
+</video>
