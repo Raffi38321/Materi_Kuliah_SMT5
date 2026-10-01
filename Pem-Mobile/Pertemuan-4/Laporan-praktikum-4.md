@@ -20,7 +20,4 @@ Langkah 2: membuat stack navigasi
 - <img src="image-7.png" width=50% />
 
 
-<video width="640" height="360" controls>
-  <source src="iPhone-14-PRO-localhost-_u6hw-fhh3gunx.webm" type="video/webm">
-  Browser Anda tidak mendukung tag video HTML5.
-</video>
+<img src="login.gif" alt="CV App" width="50%" >
