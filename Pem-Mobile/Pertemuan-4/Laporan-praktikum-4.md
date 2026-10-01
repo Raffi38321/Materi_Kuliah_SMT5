@@ -23,5 +23,8 @@ Langkah 2: membuat stack navigasi
 <img src="login.gif" alt="CV App" width="50%" >
 
 
+- bottom navigation
+<img src="bottom.gif" alt="CV App" width="50%" >
+
 - drawer navigation
 <img src="drawer copy.gif" alt="CV App" width="50%" >
