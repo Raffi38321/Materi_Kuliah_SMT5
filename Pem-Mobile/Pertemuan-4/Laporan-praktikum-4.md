@@ -19,5 +19,9 @@ Langkah 2: membuat stack navigasi
 4. app.js
 - <img src="image-7.png" width=50% />
 
-
+- stack navigation
 <img src="login.gif" alt="CV App" width="50%" >
+
+
+- drawer navigation
+<img src="drawer copy.gif" alt="CV App" width="50%" >
